@@ -1,5 +1,6 @@
 import React from 'react';
 import ExcelReader from './ExcelReader';
+import './App.css';
 
 function App() {
   return (

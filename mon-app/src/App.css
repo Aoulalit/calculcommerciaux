@@ -1,38 +1,415 @@
+/* ========= Theme ========= */
+:root {
+  --bg: #0a0f1e;
+  --surface: #0f1630;
+  /* panels */
+  --surface-2: #0b1329;
+  /* nested panels / invoice */
+  --line: rgba(255, 255, 255, .08);
+  --muted: #9aa6cf;
+  --text: #f0f3ff;
+  --heading: #ffffff;
+
+  --brand: #89a5ff;
+  --brand-2: #a9baff;
+  --accent: #20d4fd;
+
+  --success: #7de3b1;
+  --danger: #ff7b97;
+  --warn: #ffd27d;
+
+  --ring: rgba(137, 165, 255, .35);
+  --shadow: 0 12px 36px rgba(0, 0, 0, .28);
+}
+
+/* ========= Base Reset ========= */
+* {
+  box-sizing: border-box
+}
+
+html,
+body,
+#root {
+  height: 100%
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  background:
+    radial-gradient(1200px 600px at 5% -10%, #1b2350 0%, transparent 45%),
+    radial-gradient(900px 500px at 100% 0%, #142455 0%, transparent 40%),
+    radial-gradient(800px 600px at 80% 120%, #0f1a3f 0%, transparent 40%),
+    var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========= Legacy CRA hooks (keep) ========= */
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+  text-align: left;
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  background: transparent;
+  color: var(--text);
 }
 
 .App-link {
-  color: #61dafb;
+  color: var(--brand);
 }
 
 @keyframes App-logo-spin {
   from {
-    transform: rotate(0deg);
+    transform: rotate(0)
   }
+
   to {
-    transform: rotate(360deg);
+    transform: rotate(360deg)
   }
+}
+
+/* ========= Layout ========= */
+.wrapper,
+.container {
+  /* alias to keep old markup working */
+  max-width: 1120px;
+  padding: 28px 20px 64px;
+  margin: 0 auto;
+}
+
+.headerbar,
+.header {
+  /* alias */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 12px 0 24px;
+}
+
+.brandline,
+.brand {
+  /* alias */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--brand));
+  box-shadow: 0 10px 30px rgba(32, 212, 253, .16);
+}
+
+.heading,
+.title {
+  /* alias */
+  color: var(--heading);
+  font-weight: 800;
+  letter-spacing: .2px;
+  font-size: clamp(20px, 3.4vw, 30px);
+}
+
+.subheading,
+.subtitle {
+  /* alias */
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.tag,
+.badge {
+  /* alias */
+  background: linear-gradient(135deg, rgba(137, 165, 255, .22), rgba(32, 212, 253, .22));
+  color: var(--brand-2);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, .12);
+}
+
+/* ========= Surfaces / Cards ========= */
+.panel,
+.card {
+  /* alias */
+  background: linear-gradient(180deg, rgba(255, 255, 255, .02), rgba(255, 255, 255, .01));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+  margin-bottom: 18px;
+}
+
+.panel--sub {
+  background: var(--surface-2);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.panel-title,
+.card-title {
+  /* alias */
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 12px;
+}
+
+/* ========= Grid ========= */
+.gridTwo,
+.grid-2 {
+  /* alias */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 920px) {
+
+  .gridTwo,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========= Forms ========= */
+.formRow,
+.row {
+  /* alias */
+  display: grid;
+  grid-template-columns: 1fr 1.7fr;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.formLabel,
+.label {
+  /* alias */
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.field,
+.input,
+.select,
+.file {
+  /* alias */
+  width: 100%;
+  appearance: none;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s, transform .04s, background .15s;
+}
+
+.field:hover,
+.input:hover,
+.select:hover,
+.file:hover {
+  background: #121b3a;
+}
+
+.field:focus,
+.input:focus,
+.select:focus,
+.file:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 6px var(--ring);
+}
+
+.select {
+  cursor: pointer
+}
+
+/* inline helpers for two small controls side-by-side */
+.inlineControls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ========= Key / Value ========= */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  margin: 2px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, .06);
+}
+
+.k {
+  color: var(--muted)
+}
+
+.v {
+  font-weight: 600
+}
+
+.v.big {
+  font-size: 18px
+}
+
+.v.strong {
+  font-weight: 800
+}
+
+/* ========= Table ========= */
+.tableWrap,
+.table-wrap {
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: transparent;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.table thead th {
+  text-align: left;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.table tbody td {
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+  color: #e6e9fa;
+}
+
+/* ========= Buttons ========= */
+.btn {
+  --bd: var(--line);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--bd);
+  background: linear-gradient(180deg, #1a234a, #141b39);
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: transform .04s, box-shadow .15s, border-color .15s, background .15s;
+}
+
+.btn:hover {
+  box-shadow: 0 10px 26px rgba(137, 165, 255, .18)
+}
+
+.btn:active {
+  transform: translateY(1px)
+}
+
+.btn--primary {
+  --bd: rgba(137, 165, 255, .45);
+  background: linear-gradient(180deg, #233067, #1b2551);
+}
+
+.btn--danger {
+  --bd: rgba(255, 123, 151, .5);
+  background: linear-gradient(180deg, #3a1120, #2a0d18);
+  color: #ffdbe3;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-style: dashed;
+}
+
+/* Small pill badges for states */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .03);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ========= Helper texts & dividers ========= */
+.help {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px
+}
+
+.divider,
+.hr {
+  height: 1px;
+  background: var(--line);
+  margin: 12px 0 0;
+  border: 0
+}
+
+/* ========= Fancy header band (optional) ========= */
+.heroBand {
+  position: relative;
+  border-radius: 16px;
+  padding: 14px 16px;
+  background:
+    radial-gradient(260px 120px at 15% -10%, rgba(33, 212, 253, .18), transparent 60%),
+    radial-gradient(260px 120px at 85% 110%, rgba(137, 165, 255, .18), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+/* ========= Invoice preview refinement ========= */
+.invoicePreview {
+  background: var(--surface-2);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.invoiceHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.invoiceTotals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* ========= Small utilities ========= */
+.mt-8 {
+  margin-top: 8px
+}
+
+.mt-12 {
+  margin-top: 12px
+}
+
+.mt-16 {
+  margin-top: 16px
+}
+
+.center-right {
+  text-align: right
 }
