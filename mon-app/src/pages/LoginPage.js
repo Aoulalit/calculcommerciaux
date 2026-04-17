@@ -1,69 +1,75 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { apiFetch } from "../auth/api";
 
 export default function LoginPage() {
-    const nav = useNavigate();
-    const { login } = useAuth();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [err, setErr] = useState("");
-    const [loading, setLoading] = useState(false);
+  const { isAuth, login } = useAuth();
+  const [email, setEmail] = useState("test@gmail.com");
+  const [password, setPassword] = useState("test");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
-    async function submit(e) {
-        e.preventDefault();
-        setErr("");
-        setLoading(true);
-        try {
-            const data = await apiFetch("/api/auth/login", {
-                method: "POST",
-                body: { email, password },
-            });
+  if (isAuth) return <Navigate to="/" replace />;
 
-            login({ token: data.token, user: data.user });
-            nav(data.user.role === "admin" ? "/admin/users" : "/");
-        } catch (e) {
-            setErr(e.message);
-        } finally {
-            setLoading(false);
-        }
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErr("");
+    setLoading(true);
+    try {
+      const data = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: { email, password },
+      });
+      login(data);
+    } catch (e) {
+      setErr(e.message || "Erreur de connexion");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    return (
-        <div style={{ maxWidth: 460, margin: "70px auto" }}>
-            <div className="card" style={{ padding: 18 }}>
-                <h2 style={{ marginTop: 0 }}>Connexion</h2>
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-badge">✨ EDI Flow style</div>
+        <h1 className="auth-title">Connexion</h1>
+        <p className="auth-subtitle">
+          Connecte-toi pour accéder au calculateur, moduler les tarifs et générer la facture PDF.
+        </p>
 
-                <form onSubmit={submit}>
-                    <div style={{ marginBottom: 10 }}>
-                        <label style={{ display: "block", marginBottom: 6 }}>Email</label>
-                        <input
-                            className="input"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="ex: admin@admin.fr"
-                        />
-                    </div>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="test@gmail.com"
+            />
+          </div>
 
-                    <div style={{ marginBottom: 10 }}>
-                        <label style={{ display: "block", marginBottom: 6 }}>Mot de passe</label>
-                        <input
-                            className="input"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                        />
-                    </div>
+          <div className="auth-group">
+            <label>Mot de passe</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="test"
+            />
+          </div>
 
-                    {err && <div style={{ color: "red", marginBottom: 10 }}>{err}</div>}
+          {err ? <div className="alert alert-error">{err}</div> : null}
 
-                    <button className="btn btn--primary" type="submit" disabled={loading}>
-                        {loading ? "Connexion..." : "Se connecter"}
-                    </button>
-                </form>
-            </div>
+          <button className="btn" type="submit" disabled={loading}>
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
+
+        <div className="auth-note">
+          Compte admin par défaut : <strong>test@gmail.com / test</strong>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

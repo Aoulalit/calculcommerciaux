@@ -170,6 +170,10 @@ app.delete("/api/users/:id", auth, admin, (req, res) => {
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
+app.get("/", (req, res) => {
+    res.send("API OK");
+});
+
 app.listen(PORT, async () => {
     console.log(`✅ API sur http://localhost:${PORT}`);
     await seedAdmin();

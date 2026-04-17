@@ -3,184 +3,164 @@ import { useAuth } from "../auth/AuthContext";
 import { apiFetch } from "../auth/api";
 
 export default function AdminUsersPage() {
-    const { token, logout } = useAuth();
-    const [users, setUsers] = useState([]);
-    const [err, setErr] = useState("");
+  const { token, user, logout } = useAuth();
+  const [rows, setRows] = useState([]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("user");
+  const [err, setErr] = useState("");
+  const [ok, setOk] = useState("");
 
-    const [createForm, setCreateForm] = useState({
-        email: "",
-        password: "",
-        role: "user",
-    });
-
-    async function load() {
-        setErr("");
-        try {
-            const data = await apiFetch("/api/users", { token });
-            setUsers(data);
-        } catch (e) {
-            setErr(e.message);
-        }
+  async function loadUsers() {
+    try {
+      setErr("");
+      const data = await apiFetch("/api/users", { token });
+      setRows(data);
+    } catch (e) {
+      setErr(e.message || "Erreur chargement utilisateurs");
     }
+  }
 
-    useEffect(() => {
-        load();
-        // eslint-disable-next-line
-    }, []);
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
-    async function createUser(e) {
-        e.preventDefault();
-        setErr("");
-        try {
-            await apiFetch("/api/users", {
-                token,
-                method: "POST",
-                body: createForm,
-            });
-            setCreateForm({ email: "", password: "", role: "user" });
-            load();
-        } catch (e) {
-            setErr(e.message);
-        }
+  async function handleCreate(e) {
+    e.preventDefault();
+    setErr("");
+    setOk("");
+    try {
+      await apiFetch("/api/users", {
+        token,
+        method: "POST",
+        body: { email, password, role },
+      });
+      setEmail("");
+      setPassword("");
+      setRole("user");
+      setOk("Utilisateur créé");
+      loadUsers();
+    } catch (e) {
+      setErr(e.message || "Erreur création utilisateur");
     }
+  }
 
-    async function changeRole(id, role) {
-        setErr("");
-        try {
-            await apiFetch(`/api/users/${id}`, {
-                token,
-                method: "PATCH",
-                body: { role },
-            });
-            load();
-        } catch (e) {
-            setErr(e.message);
-        }
+  async function handleDelete(id) {
+    setErr("");
+    setOk("");
+    try {
+      await apiFetch(`/api/users/${id}`, {
+        token,
+        method: "DELETE",
+      });
+      setOk("Utilisateur supprimé");
+      loadUsers();
+    } catch (e) {
+      setErr(e.message || "Erreur suppression utilisateur");
     }
+  }
 
-    async function resetPassword(id) {
-        const pwd = prompt("Nouveau mot de passe :");
-        if (!pwd) return;
-        setErr("");
-        try {
-            await apiFetch(`/api/users/${id}`, {
-                token,
-                method: "PATCH",
-                body: { password: pwd },
-            });
-            load();
-        } catch (e) {
-            setErr(e.message);
-        }
-    }
-
-    async function delUser(id) {
-        if (!window.confirm("Supprimer cet utilisateur ?")) return;
-        setErr("");
-        try {
-            await apiFetch(`/api/users/${id}`, {
-                token,
-                method: "DELETE",
-            });
-            load();
-        } catch (e) {
-            setErr(e.message);
-        }
-    }
-
-    return (
-        <div style={{ maxWidth: 900, margin: "30px auto" }}>
-            <div className="card" style={{ padding: 18 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-                    <h2 style={{ margin: 0 }}>Admin • Utilisateurs</h2>
-                    <button className="btn btn--danger" onClick={logout} type="button">
-                        Déconnexion
-                    </button>
-                </div>
-
-                <hr style={{ opacity: 0.2 }} />
-
-                <h3>Créer un utilisateur</h3>
-                <form onSubmit={createUser} style={{ display: "grid", gap: 10 }}>
-                    <input
-                        className="input"
-                        placeholder="Email"
-                        value={createForm.email}
-                        onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                    />
-                    <input
-                        className="input"
-                        type="password"
-                        placeholder="Mot de passe"
-                        value={createForm.password}
-                        onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                    />
-
-                    <select
-                        className="select"
-                        value={createForm.role}
-                        onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                    >
-                        <option value="user">user</option>
-                        <option value="admin">admin</option>
-                    </select>
-
-                    <button className="btn btn--primary" type="submit">
-                        Créer
-                    </button>
-                </form>
-
-                {err && <div style={{ color: "red", marginTop: 12 }}>{err}</div>}
-
-                <hr style={{ opacity: 0.2, margin: "18px 0" }} />
-
-                <h3>Liste</h3>
-                <div style={{ overflow: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                            <tr style={{ textAlign: "left" }}>
-                                <th style={{ padding: 8, borderBottom: "1px solid rgba(255,255,255,.15)" }}>Email</th>
-                                <th style={{ padding: 8, borderBottom: "1px solid rgba(255,255,255,.15)" }}>Rôle</th>
-                                <th style={{ padding: 8, borderBottom: "1px solid rgba(255,255,255,.15)" }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map((u) => (
-                                <tr key={u.id}>
-                                    <td style={{ padding: 8, borderBottom: "1px solid rgba(255,255,255,.08)" }}>{u.email}</td>
-                                    <td style={{ padding: 8, borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-                                        <select className="select" value={u.role} onChange={(e) => changeRole(u.id, e.target.value)}>
-                                            <option value="user">user</option>
-                                            <option value="admin">admin</option>
-                                        </select>
-                                    </td>
-                                    <td style={{ padding: 8, borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-                                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                            <button className="btn" type="button" onClick={() => resetPassword(u.id)}>
-                                                Reset MDP
-                                            </button>
-                                            <button className="btn btn--danger" type="button" onClick={() => delUser(u.id)}>
-                                                Supprimer
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {users.length === 0 && (
-                                <tr>
-                                    <td colSpan={3} style={{ padding: 8, opacity: 0.7 }}>
-                                        Aucun utilisateur
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style={{ marginTop: 14, opacity: 0.7 }}>
-                    URL : <b>/admin/users</b>
-                </div>
-            </div>
+  return (
+    <div className="admin-shell">
+      <div className="admin-topbar">
+        <div className="admin-brand">
+          <div className="admin-logo">E</div>
+          <div>
+            <div className="admin-title">Administration</div>
+            <div className="admin-subtitle">Gestion des comptes utilisateur</div>
+          </div>
         </div>
-    );
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <span className="pill">{user?.email}</span>
+          <button className="btn btn-danger" onClick={logout}>
+            Déconnexion
+          </button>
+        </div>
+      </div>
+
+      <div className="admin-grid">
+        <div className="panel">
+          <div className="panel-title">Créer un utilisateur</div>
+
+          <form className="admin-form" onSubmit={handleCreate}>
+            <div>
+              <label>Email</label>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@exemple.com"
+              />
+            </div>
+
+            <div>
+              <label>Mot de passe</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mot de passe"
+              />
+            </div>
+
+            <div>
+              <label>Rôle</label>
+              <select value={role} onChange={(e) => setRole(e.target.value)}>
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
+
+            {err ? <div className="alert alert-error">{err}</div> : null}
+            {ok ? <div className="alert alert-success">{ok}</div> : null}
+
+            <button className="btn" type="submit">
+              Créer
+            </button>
+          </form>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">Utilisateurs</div>
+
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Email</th>
+                  <th>Rôle</th>
+                  <th>Créé le</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.id}</td>
+                    <td>{r.email}</td>
+                    <td>{r.role}</td>
+                    <td>{r.created_at}</td>
+                    <td>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => handleDelete(r.id)}
+                      >
+                        Supprimer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!rows.length && (
+                  <tr>
+                    <td colSpan="5">Aucun utilisateur</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
