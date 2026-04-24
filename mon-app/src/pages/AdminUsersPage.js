@@ -29,12 +29,14 @@ export default function AdminUsersPage() {
     e.preventDefault();
     setErr("");
     setOk("");
+
     try {
       await apiFetch("/api/users", {
         token,
         method: "POST",
         body: { email, password, role },
       });
+
       setEmail("");
       setPassword("");
       setRole("user");
@@ -48,11 +50,13 @@ export default function AdminUsersPage() {
   async function handleDelete(id) {
     setErr("");
     setOk("");
+
     try {
       await apiFetch(`/api/users/${id}`, {
         token,
         method: "DELETE",
       });
+
       setOk("Utilisateur supprimé");
       loadUsers();
     } catch (e) {
@@ -114,7 +118,7 @@ export default function AdminUsersPage() {
             {err ? <div className="alert alert-error">{err}</div> : null}
             {ok ? <div className="alert alert-success">{ok}</div> : null}
 
-            <button className="btn" type="submit">
+            <button className="btn btn-primary" type="submit">
               Créer
             </button>
           </form>
@@ -151,6 +155,7 @@ export default function AdminUsersPage() {
                     </td>
                   </tr>
                 ))}
+
                 {!rows.length && (
                   <tr>
                     <td colSpan="5">Aucun utilisateur</td>

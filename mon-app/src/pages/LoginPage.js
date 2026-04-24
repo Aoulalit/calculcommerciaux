@@ -14,8 +14,10 @@ export default function LoginPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
     setErr("");
     setLoading(true);
+
     try {
       const data = await apiFetch("/api/auth/login", {
         method: "POST",
@@ -33,35 +35,46 @@ export default function LoginPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-badge">✨ EDI Flow style</div>
+
         <h1 className="auth-title">Connexion</h1>
+
         <p className="auth-subtitle">
-          Connecte-toi pour accéder au calculateur, moduler les tarifs et générer la facture PDF.
+          Connecte-toi pour accéder au calculateur, moduler les tarifs et
+          générer la facture PDF.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-group">
-            <label>Email</label>
+            <label htmlFor="email">Email</label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="test@gmail.com"
+              autoComplete="username"
             />
           </div>
 
           <div className="auth-group">
-            <label>Mot de passe</label>
+            <label htmlFor="password">Mot de passe</label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="test"
+              autoComplete="current-password"
             />
           </div>
 
           {err ? <div className="alert alert-error">{err}</div> : null}
 
-          <button className="btn" type="submit" disabled={loading}>
+          <button
+            className="btn btn-primary auth-submit"
+            type="submit"
+            disabled={loading}
+          >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
