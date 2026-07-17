@@ -1,0 +1,42 @@
+{
+  "baseCourse": {
+    "value": 0,
+    "enabled": false
+  },
+  "pricePerKm": {
+    "value": 999,
+    "enabled": true
+  },
+  "pricePerMinute": {
+    "value": 200,
+    "enabled": true
+  },
+  "hourlyRate": {
+    "value": 0,
+    "enabled": false
+  },
+  "minimumHours": {
+    "value": 0,
+    "enabled": false
+  },
+  "forfaitPrice": {
+    "value": 25,
+    "enabled": false
+  },
+  "vatPct": {
+    "value": 20,
+    "enabled": true
+  },
+  "nightPct": {
+    "value": 15,
+    "enabled": false
+  },
+  "weekendPct": {
+    "value": 20,
+    "enabled": false
+  },
+  "discountPct": {
+    "value": 0,
+    "enabled": false
+  }
+}

@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { useAuth } from "./auth/AuthContext";
+import { apiFetch } from "./auth/api";
 
 const ROUTE_API_URL =
   process.env.REACT_APP_ROUTE_API_URL ||
@@ -112,6 +114,34 @@ const defaultPricing = {
   discountPct: 0,
   vatPct: 20,
 };
+
+const PRICING_FIELD_INFO = {
+  baseCourse:
+    "Montant fixe facturé au démarrage de chaque course, avant tout calcul de distance ou de temps.",
+  pricePerKm:
+    "Montant ajouté par kilomètre parcouru pendant la course.",
+  pricePerMinute:
+    "Montant ajouté par minute de trajet.",
+  hourlyRate:
+    "Tarif appliqué par heure si la course est facturée au temps passé (utilisé avec la durée minimale).",
+  minimumHours:
+    "Nombre d'heures minimum facturées, même si la course réelle est plus courte.",
+  forfaitPrice:
+    "Prix fixe appliqué à la place du calcul détaillé quand 'Utiliser le forfait déplacement' est coché.",
+  vatPct:
+    "Taux de TVA appliqué au montant total HT pour obtenir le montant TTC.",
+  nightPct:
+    "Pourcentage ajouté au prix quand la case 'Prestation de nuit' est cochée.",
+  weekendPct:
+    "Pourcentage ajouté au prix quand la case 'Prestation week-end' est cochée.",
+  discountPct:
+    "Pourcentage déduit du montant total avant application de la TVA.",
+};
+
+const defaultPricingConfig = Object.keys(defaultPricing).reduce((acc, key) => {
+  acc[key] = { value: defaultPricing[key], enabled: true };
+  return acc;
+}, {});
 
 const defaultCustomFields = [
   {
@@ -247,8 +277,21 @@ function buildEntry({ invoice, client, trip, pricing, customFields }) {
   };
 }
 
+function InfoTooltip({ text }) {
+  return (
+    <span className="info-tooltip" tabIndex={0}>
+      <span className="info-tooltip-icon" aria-hidden="true">
+        !
+      </span>
+      <span className="info-tooltip-bubble">{text}</span>
+    </span>
+  );
+}
+
 export default function ExcelReader() {
   const invoiceRef = useRef(null);
+  const { token, user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const [company, setCompany] = useState(() =>
     readStorage(STORAGE_KEYS.company, defaultCompany)
@@ -265,6 +308,7 @@ export default function ExcelReader() {
   const [pricing, setPricing] = useState(() =>
     readStorage(STORAGE_KEYS.pricing, defaultPricing)
   );
+  const [pricingConfig, setPricingConfig] = useState(defaultPricingConfig);
   const [customFields, setCustomFields] = useState(() =>
     readStorage(STORAGE_KEYS.customFields, defaultCustomFields)
   );
@@ -294,6 +338,42 @@ export default function ExcelReader() {
   useEffect(() => {
     writeStorage(STORAGE_KEYS.pricing, pricing);
   }, [pricing]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPricingConfig() {
+      try {
+        const data = await apiFetch("/api/pricing-config", { token });
+        if (cancelled) return;
+
+        setPricingConfig(data);
+
+        if (!isAdmin) {
+          setPricing((prev) => {
+            const next = { ...prev };
+            Object.keys(data).forEach((key) => {
+              if (data[key]?.enabled) {
+                next[key] = data[key].value;
+              }
+            });
+            return next;
+          });
+        }
+      } catch (error) {
+        console.error("Erreur chargement config prix, valeurs locales conservées", error);
+      }
+    }
+
+    if (token) {
+      loadPricingConfig();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, isAdmin]);
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.customFields, customFields);
@@ -411,6 +491,12 @@ export default function ExcelReader() {
 
   const updatePricing = (key, value) =>
     setPricing((prev) => ({ ...prev, [key]: value }));
+
+  const isPricingFieldVisible = (key) =>
+    isAdmin || pricingConfig[key]?.enabled !== false;
+
+  const isPricingFieldLocked = (key) =>
+    !isAdmin && !!pricingConfig[key]?.enabled;
 
   const addCustomField = () => {
     setCustomFields((prev) => [
@@ -1012,128 +1098,188 @@ export default function ExcelReader() {
               </div>
             </section>
 
-            <section className="card">
+           <section className="card">
               <h2>Tarification</h2>
               <div className="grid-2">
-                <div className="field">
-                  <label>Base course HT</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.baseCourse}
-                    onChange={(e) =>
-                      updatePricing("baseCourse", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("baseCourse") && (
+                  <div className="field">
+                    <label>
+                      Base course HT
+                      <InfoTooltip text={PRICING_FIELD_INFO.baseCourse} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.baseCourse}
+                      disabled={isPricingFieldLocked("baseCourse")}
+                      onChange={(e) =>
+                        updatePricing("baseCourse", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Prix au km HT</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.pricePerKm}
-                    onChange={(e) =>
-                      updatePricing("pricePerKm", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("pricePerKm") && (
+                  <div className="field">
+                    <label>
+                      Prix au km HT
+                      <InfoTooltip text={PRICING_FIELD_INFO.pricePerKm} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.pricePerKm}
+                      disabled={isPricingFieldLocked("pricePerKm")}
+                      onChange={(e) =>
+                        updatePricing("pricePerKm", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Prix à la minute HT</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.pricePerMinute}
-                    onChange={(e) =>
-                      updatePricing("pricePerMinute", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("pricePerMinute") && (
+                  <div className="field">
+                    <label>
+                      Prix à la minute HT
+                      <InfoTooltip text={PRICING_FIELD_INFO.pricePerMinute} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.pricePerMinute}
+                      disabled={isPricingFieldLocked("pricePerMinute")}
+                      onChange={(e) =>
+                        updatePricing("pricePerMinute", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Tarif horaire HT</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.hourlyRate}
-                    onChange={(e) =>
-                      updatePricing("hourlyRate", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("hourlyRate") && (
+                  <div className="field">
+                    <label>
+                      Tarif horaire HT
+                      <InfoTooltip text={PRICING_FIELD_INFO.hourlyRate} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.hourlyRate}
+                      disabled={isPricingFieldLocked("hourlyRate")}
+                      onChange={(e) =>
+                        updatePricing("hourlyRate", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Durée minimale (h)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.minimumHours}
-                    onChange={(e) =>
-                      updatePricing("minimumHours", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("minimumHours") && (
+                  <div className="field">
+                    <label>
+                      Durée minimale (h)
+                      <InfoTooltip text={PRICING_FIELD_INFO.minimumHours} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.minimumHours}
+                      disabled={isPricingFieldLocked("minimumHours")}
+                      onChange={(e) =>
+                        updatePricing("minimumHours", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Forfait déplacement HT</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.forfaitPrice}
-                    onChange={(e) =>
-                      updatePricing("forfaitPrice", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("forfaitPrice") && (
+                  <div className="field">
+                    <label>
+                      Forfait déplacement HT
+                      <InfoTooltip text={PRICING_FIELD_INFO.forfaitPrice} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.forfaitPrice}
+                      disabled={isPricingFieldLocked("forfaitPrice")}
+                      onChange={(e) =>
+                        updatePricing("forfaitPrice", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>TVA (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.vatPct}
-                    onChange={(e) =>
-                      updatePricing("vatPct", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("vatPct") && (
+                  <div className="field">
+                    <label>
+                      TVA (%)
+                      <InfoTooltip text={PRICING_FIELD_INFO.vatPct} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.vatPct}
+                      disabled={isPricingFieldLocked("vatPct")}
+                      onChange={(e) =>
+                        updatePricing("vatPct", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Majoration nuit (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.nightPct}
-                    onChange={(e) =>
-                      updatePricing("nightPct", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("nightPct") && (
+                  <div className="field">
+                    <label>
+                      Majoration nuit (%)
+                      <InfoTooltip text={PRICING_FIELD_INFO.nightPct} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.nightPct}
+                      disabled={isPricingFieldLocked("nightPct")}
+                      onChange={(e) =>
+                        updatePricing("nightPct", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Majoration week-end (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.weekendPct}
-                    onChange={(e) =>
-                      updatePricing("weekendPct", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("weekendPct") && (
+                  <div className="field">
+                    <label>
+                      Majoration week-end (%)
+                      <InfoTooltip text={PRICING_FIELD_INFO.weekendPct} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.weekendPct}
+                      disabled={isPricingFieldLocked("weekendPct")}
+                      onChange={(e) =>
+                        updatePricing("weekendPct", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
 
-                <div className="field">
-                  <label>Remise (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricing.discountPct}
-                    onChange={(e) =>
-                      updatePricing("discountPct", toNumber(e.target.value))
-                    }
-                  />
-                </div>
+                {isPricingFieldVisible("discountPct") && (
+                  <div className="field">
+                    <label>
+                      Remise (%)
+                      <InfoTooltip text={PRICING_FIELD_INFO.discountPct} />
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricing.discountPct}
+                      disabled={isPricingFieldLocked("discountPct")}
+                      onChange={(e) =>
+                        updatePricing("discountPct", toNumber(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
               </div>
             </section>
 

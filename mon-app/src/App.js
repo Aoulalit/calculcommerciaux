@@ -4,6 +4,7 @@ import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import ExcelReader from "./ExcelReader";
 import LoginPage from "./pages/LoginPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminPricingPage from "./pages/AdminPricingPage";
 
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -44,6 +45,15 @@ function Layout() {
             >
               Gestion des users
             </NavLink>
+
+            <NavLink
+              to="/admin/pricing"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              Gestion prix
+            </NavLink>
           </nav>
         </div>
 
@@ -75,6 +85,15 @@ function Layout() {
             element={
               <ProtectedRoute adminOnly>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/pricing"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminPricingPage />
               </ProtectedRoute>
             }
           />

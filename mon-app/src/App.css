@@ -171,6 +171,9 @@ body {
 }
 
 .field label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
